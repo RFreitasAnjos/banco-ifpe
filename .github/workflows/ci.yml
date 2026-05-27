@@ -58,8 +58,11 @@ jobs:
           echo "Estrutura Maven OK"
 
       - name: Validar Docker Compose
-        working-directory: ${{ env.PROJECT_DIR }}/docker
-        run: docker compose -f docker-compose.yml config
+        run: |
+          COMPOSE_FILE="$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml"
+          test -s "$COMPOSE_FILE"
+          ls -lah "$COMPOSE_FILE"
+          docker compose -f "$COMPOSE_FILE" config
 
   ###########################################################################
   # 2. LINT / ANALISE ESTATICA
@@ -275,12 +278,10 @@ jobs:
           test -f banco-ifpe/target/banco-ifpe.war
 
       - name: Build WildFly
-        working-directory: banco-ifpe/docker
-        run: docker compose build wildfly
+        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" build wildfly
 
       - name: Subir PostgreSQL
-        working-directory: banco-ifpe/docker
-        run: docker compose up -d postgres
+        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" up -d postgres
 
       - name: Esperar PostgreSQL
         run: |
@@ -296,8 +297,7 @@ jobs:
           echo "PostgreSQL pronto."
 
       - name: Subir WildFly
-        working-directory: banco-ifpe/docker
-        run: docker compose up -d wildfly
+        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" up -d wildfly
 
       - name: Esperar deploy da aplicacao
         run: |
@@ -360,8 +360,7 @@ jobs:
 
       - name: Derrubar ambiente
         if: always()
-        working-directory: banco-ifpe/docker
-        run: docker compose down -v
+        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" down -v
 
   ###########################################################################
   # 6. RESUMO FINAL
@@ -389,3 +388,5 @@ jobs:
           echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
+
+
