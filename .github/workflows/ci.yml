@@ -59,7 +59,7 @@ jobs:
 
       - name: Validar Docker Compose
         working-directory: ${{ env.PROJECT_DIR }}/docker
-        run: docker compose config
+        run: docker compose -f docker-compose.yml config
 
   ###########################################################################
   # 2. LINT / ANALISE ESTATICA
@@ -287,7 +287,7 @@ jobs:
           echo "Aguardando PostgreSQL..."
 
           timeout 90 bash -c '
-            until docker exec postgres_cliente_system \
+            until docker exec postgres_banco_ifpe \
               pg_isready -U postgres; do
               sleep 3
             done
@@ -340,10 +340,10 @@ jobs:
         run: |
           mkdir -p /tmp/container-logs
 
-          docker logs postgres_cliente_system \
+          docker logs postgres_banco_ifpe \
             > /tmp/container-logs/postgres.log 2>&1 || true
 
-          docker logs wildfly_cliente_system \
+          docker logs wildfly_banco_ifpe \
             > /tmp/container-logs/wildfly.log 2>&1 || true
 
       - name: Upload logs
@@ -360,7 +360,7 @@ jobs:
 
       - name: Derrubar ambiente
         if: always()
-        working-directory: cliente-system/docker
+        working-directory: banco-ifpe/docker
         run: docker compose down -v
 
   ###########################################################################
