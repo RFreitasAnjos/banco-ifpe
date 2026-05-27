@@ -248,11 +248,19 @@ jobs:
       - name: Resolver caminhos do projeto
         run: |
           if [ -f "banco-ifpe/pom.xml" ]; then
-            echo "PROJECT_DIR=banco-ifpe" >> "$GITHUB_ENV"
+            PROJECT_DIR="banco-ifpe"
           else
-            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+            PROJECT_DIR="."
           fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
           echo "COMPOSE_FILE=$PROJECT_DIR/docker/docker-compose.yml" >> "$GITHUB_ENV"
+
+      - name: Validar caminho do docker-compose
+        run: |
+          echo "PROJECT_DIR=$PROJECT_DIR"
+          echo "COMPOSE_FILE=$COMPOSE_FILE"
+          test -s "$COMPOSE_FILE"
+          ls -lah "$COMPOSE_FILE"
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -365,4 +373,6 @@ jobs:
           echo "| Test | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Build | ${{ needs.build.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| E2E | ${{ needs.e2e.result }} |" >> "$GITHUB_STEP_SUMMARY"
+
+
 
