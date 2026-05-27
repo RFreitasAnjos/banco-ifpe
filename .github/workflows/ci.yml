@@ -1,4 +1,4 @@
-name: CI - Cliente System
+name: CI - Banco IFPE
 
 permissions:
   contents: read
@@ -14,7 +14,7 @@ on:
       - 'release/**'
 
     paths:
-      - 'cliente-system/**'
+      - 'banco-ifpe/**'
       - '.github/workflows/**'
 
   pull_request:
@@ -22,20 +22,20 @@ on:
       - dev
 
     paths:
-      - 'cliente-system/**'
+      - 'banco-ifpe/**'
       - '.github/workflows/**'
 
 concurrency:
-  group: cliente-system-${{ github.ref }}
+  group: banco-ifpe-${{ github.ref }}
   cancel-in-progress: true
 
 env:
   JAVA_VERSION: '8'
   JAVA_DISTRIBUTION: 'temurin'
   MAVEN_OPTS: "-Xmx1024m"
-  PROJECT_DIR: cliente-system
-  WAR_FILE: cliente-system.war
-  WAR_PATH: cliente-system/target/cliente-system.war
+  PROJECT_DIR: banco-ifpe
+  WAR_FILE: banco-ifpe.war
+  WAR_PATH: banco-ifpe/target/banco-ifpe.war
 
 jobs:
 
@@ -104,8 +104,8 @@ jobs:
         with:
           name: spotbugs-report
           path: |
-            cliente-system/target/spotbugsXml.xml
-            cliente-system/target/site/
+            banco-ifpe/target/spotbugsXml.xml
+            banco-ifpe/target/site/
           retention-days: 5
 
   ###########################################################################
@@ -142,7 +142,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: surefire-reports
-          path: cliente-system/target/surefire-reports/
+          path: banco-ifpe/target/surefire-reports/
           retention-days: 7
 
       - name: Publicar cobertura JaCoCo
@@ -150,7 +150,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: jacoco-report
-          path: cliente-system/target/site/jacoco/
+          path: banco-ifpe/target/site/jacoco/
           retention-days: 7
 
       - name: Resumo dos testes
@@ -158,7 +158,7 @@ jobs:
         run: |
           echo "## Resultado dos Testes Unitarios" >> $GITHUB_STEP_SUMMARY
 
-          REPORT_DIR="cliente-system/target/surefire-reports"
+          REPORT_DIR="banco-ifpe/target/surefire-reports"
 
           if ls "$REPORT_DIR"/TEST-*.xml 1>/dev/null 2>&1; then
 
@@ -229,7 +229,7 @@ jobs:
       - name: Upload WAR
         uses: actions/upload-artifact@v4
         with:
-          name: cliente-system-war
+          name: banco-ifpe-war
           path: ${{ env.WAR_PATH }}
           retention-days: 3
 
@@ -266,20 +266,20 @@ jobs:
       - name: Download WAR
         uses: actions/download-artifact@v4
         with:
-          name: cliente-system-war
-          path: cliente-system/target/
+          name: banco-ifpe-war
+          path: banco-ifpe/target/
 
       - name: Confirmar WAR
         run: |
-          ls -lh cliente-system/target/
-          test -f cliente-system/target/cliente-system.war
+          ls -lh banco-ifpe/target/
+          test -f banco-ifpe/target/banco-ifpe.war
 
       - name: Build WildFly
-        working-directory: cliente-system/docker
+        working-directory: banco-ifpe/docker
         run: docker compose build wildfly
 
       - name: Subir PostgreSQL
-        working-directory: cliente-system/docker
+        working-directory: banco-ifpe/docker
         run: docker compose up -d postgres
 
       - name: Esperar PostgreSQL
@@ -296,7 +296,7 @@ jobs:
           echo "PostgreSQL pronto."
 
       - name: Subir WildFly
-        working-directory: cliente-system/docker
+        working-directory: banco-ifpe/docker
         run: docker compose up -d wildfly
 
       - name: Esperar deploy da aplicacao
@@ -305,7 +305,7 @@ jobs:
 
           timeout 180 bash -c '
             until curl -sf \
-              http://localhost:8080/cliente-system/content/clientes/listarClientes.xhtml \
+              http://localhost:8080/banco-ifpe/content/clientes/listarClientes.xhtml \
               -o /dev/null; do
               sleep 5
               echo "Aplicacao ainda nao respondeu..."
@@ -315,9 +315,9 @@ jobs:
           echo "Aplicacao disponivel."
 
       - name: Executar testes E2E
-        working-directory: cliente-system
+        working-directory: banco-ifpe
         env:
-          APP_BASE_URL: http://localhost:8080/cliente-system
+          APP_BASE_URL: http://localhost:8080/banco-ifpe
         run: |
           mvn \
             -B \
@@ -331,8 +331,8 @@ jobs:
         with:
           name: e2e-reports
           path: |
-            cliente-system/target/failsafe-reports/
-            cliente-system/target/screenshots/
+            banco-ifpe/target/failsafe-reports/
+            banco-ifpe/target/screenshots/
           retention-days: 5
 
       - name: Logs containers
