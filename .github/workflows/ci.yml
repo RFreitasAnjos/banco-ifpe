@@ -54,7 +54,7 @@ jobs:
           echo "Estrutura Maven OK"
 
       - name: Validar Docker Compose
-        working-directory: ./docker
+        working-directory: docker
         run: docker compose -f docker-compose.yml config
 
   ###########################################################################
