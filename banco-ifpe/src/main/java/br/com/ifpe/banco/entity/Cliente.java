@@ -96,7 +96,7 @@ public class Cliente implements Serializable {
   private String profissao;
   
   @Min(0)
-  @Max(1000)
+  @Max(10)
   @Column(name = "score", nullable = false)
   private int score;
 
