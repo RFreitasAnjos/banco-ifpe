@@ -23,4 +23,4 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ../target/banco-ifpe.war:/opt/jboss/wildfly/standalone/deployments/banco-ifpe.war:ro
+      - ../target/banco-ifpe.war:/opt/wildfly/standalone/deployments/banco-ifpe.war:ro
