@@ -1,4 +1,4 @@
-name: CI - Banco IFPE
+name: CI - banco-ifpe
 
 permissions:
   contents: read
@@ -8,10 +8,6 @@ on:
     branches:
       - dev
       - 'feature/**'
-      - 'feat/**'
-      - 'fix/**'
-      - 'hotfix/**'
-      - 'release/**'
 
     paths:
       - 'banco-ifpe/**'
@@ -58,36 +54,8 @@ jobs:
           echo "Estrutura Maven OK"
 
       - name: Validar Docker Compose
-        run: |
-          echo "Workspace: $GITHUB_WORKSPACE"
-          pwd
-          ls -lah
-
-          # Localiza o compose de forma robusta para evitar falha por caminho relativo/absoluto.
-          COMPOSE_FILE=""
-          for candidate in \
-            "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" \
-            "$GITHUB_WORKSPACE/banco-ifpe/docker/compose.yml" \
-            "$GITHUB_WORKSPACE/banco-ifpe/docker/compose.yaml" \
-            "$GITHUB_WORKSPACE/docker/docker-compose.yml" \
-            "$GITHUB_WORKSPACE/docker/compose.yml" \
-            "$GITHUB_WORKSPACE/docker/compose.yaml"; do
-            if [ -s "$candidate" ]; then
-              COMPOSE_FILE="$candidate"
-              break
-            fi
-          done
-
-          if [ -z "$COMPOSE_FILE" ]; then
-            echo "ERRO: compose file nao encontrado ou vazio."
-            echo "Arquivos compose encontrados no workspace:"
-            find "$GITHUB_WORKSPACE" -maxdepth 4 \( -name "docker-compose.yml" -o -name "compose.yml" -o -name "compose.yaml" \) -print || true
-            exit 1
-          fi
-
-          echo "Usando compose: $COMPOSE_FILE"
-          ls -lah "$COMPOSE_FILE"
-          docker compose -f "$COMPOSE_FILE" config
+        working-directory: ${{ env.PROJECT_DIR }}/docker
+        run: docker compose config
 
   ###########################################################################
   # 2. LINT / ANALISE ESTATICA
@@ -303,17 +271,19 @@ jobs:
           test -f banco-ifpe/target/banco-ifpe.war
 
       - name: Build WildFly
-        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" build wildfly
+        working-directory: banco-ifpe/docker
+        run: docker compose build wildfly
 
       - name: Subir PostgreSQL
-        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" up -d postgres
+        working-directory: banco-ifpe/docker
+        run: docker compose up -d postgres
 
       - name: Esperar PostgreSQL
         run: |
           echo "Aguardando PostgreSQL..."
 
           timeout 90 bash -c '
-            until docker exec postgres_banco_ifpe \
+            until docker exec postgres_cliente_system \
               pg_isready -U postgres; do
               sleep 3
             done
@@ -322,7 +292,8 @@ jobs:
           echo "PostgreSQL pronto."
 
       - name: Subir WildFly
-        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" up -d wildfly
+        working-directory: banco-ifpe/docker
+        run: docker compose up -d wildfly
 
       - name: Esperar deploy da aplicacao
         run: |
@@ -365,10 +336,10 @@ jobs:
         run: |
           mkdir -p /tmp/container-logs
 
-          docker logs postgres_banco_ifpe \
+          docker logs postgres_cliente_system \
             > /tmp/container-logs/postgres.log 2>&1 || true
 
-          docker logs wildfly_banco_ifpe \
+          docker logs wildfly_cliente_system \
             > /tmp/container-logs/wildfly.log 2>&1 || true
 
       - name: Upload logs
@@ -385,7 +356,8 @@ jobs:
 
       - name: Derrubar ambiente
         if: always()
-        run: docker compose -f "$GITHUB_WORKSPACE/banco-ifpe/docker/docker-compose.yml" down -v
+        working-directory: banco-ifpe/docker
+        run: docker compose down -v
 
   ###########################################################################
   # 6. RESUMO FINAL
@@ -413,6 +385,3 @@ jobs:
           echo "| Test | ${{ needs.test.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| Build | ${{ needs.build.result }} |" >> $GITHUB_STEP_SUMMARY
           echo "| E2E | ${{ needs.e2e.result }} |" >> $GITHUB_STEP_SUMMARY
-
-
-
