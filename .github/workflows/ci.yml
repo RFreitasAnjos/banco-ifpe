@@ -1,4 +1,4 @@
-name: CI - banco-ifpe
+name: CI - Banco IFPE
 
 permissions:
   contents: read
@@ -54,8 +54,8 @@ jobs:
           echo "Estrutura Maven OK"
 
       - name: Validar Docker Compose
-        working-directory: ${{ env.PROJECT_DIR }}/docker
-        run: docker compose config
+        working-directory: ./docker
+        run: docker compose -f docker-compose.yml config
 
   ###########################################################################
   # 2. LINT / ANALISE ESTATICA
