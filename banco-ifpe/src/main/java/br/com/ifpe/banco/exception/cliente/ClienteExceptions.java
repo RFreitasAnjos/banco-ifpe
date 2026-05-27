@@ -21,6 +21,6 @@ public class ClienteExceptions extends RuntimeException {
   }
 
   public static ClienteExceptions dadosObrigatorios() {
-    return new ClienteExceptions("Nome completo, CPF, email e data de nascimento sao obrigatorios.");
+    return new ClienteExceptions("Nome completo, CPF, email, data de nascimento, estado civil e genero sao obrigatorios.");
   }
 }

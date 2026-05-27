@@ -65,7 +65,9 @@ public class ClienteService {
         || isBlank(cliente.getNomeCompleto())
         || isBlank(cliente.getCpf())
         || isBlank(cliente.getEmail())
-        || cliente.getDataNascimento() == null) {
+        || cliente.getDataNascimento() == null
+        || cliente.getEstadoCivil() == null
+        || cliente.getGenero() == null) {
       throw ClienteExceptions.dadosObrigatorios();
     }
   }

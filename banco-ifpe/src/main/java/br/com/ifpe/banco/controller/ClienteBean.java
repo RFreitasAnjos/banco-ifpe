@@ -1,7 +1,6 @@
 package br.com.ifpe.banco.controller;
 
 import java.io.Serializable;
-import java.util.ArrayList;
 import java.util.List;
 
 import javax.annotation.PostConstruct;
@@ -127,3 +126,4 @@ public class ClienteBean implements Serializable {
   }
 
 }
+
