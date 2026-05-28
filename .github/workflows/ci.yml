@@ -305,10 +305,18 @@ jobs:
       - name: Subir WildFly
         run: docker compose -f "$COMPOSE_FILE" up -d wildfly
 
+      - name: Esperar WildFly iniciar
+        run: |
+          timeout 300 bash -c '
+            until docker logs wildfly_banco_ifpe 2>&1 | grep -q "WFLYSRV0025"; do
+              sleep 5
+            done
+          '
+
       - name: Esperar deploy da aplicacao
         run: |
-          timeout 180 bash -c '
-            until curl -sf http://localhost:8080/banco-ifpe/content/clientes/listarClientes.xhtml -o /dev/null; do
+          timeout 300 bash -c '
+            until curl -sf http://localhost:8080/banco-ifpe/ -o /dev/null; do
               sleep 5
             done
           '
@@ -373,6 +381,10 @@ jobs:
           echo "| Test | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Build | ${{ needs.build.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| E2E | ${{ needs.e2e.result }} |" >> "$GITHUB_STEP_SUMMARY"
+
+
+
+
 
 
 
