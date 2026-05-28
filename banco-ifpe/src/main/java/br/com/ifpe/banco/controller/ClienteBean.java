@@ -10,6 +10,7 @@ import javax.faces.view.ViewScoped;
 import javax.inject.Inject;
 import javax.inject.Named;
 
+import br.com.ifpe.banco.constants.PathConstants;
 import br.com.ifpe.banco.entity.Cliente;
 import br.com.ifpe.banco.exception.cliente.ClienteExceptions;
 import br.com.ifpe.banco.service.ClienteService;
@@ -43,13 +44,13 @@ public class ClienteBean implements Serializable {
   }
 
   public String irParaLista() {
-    return "/content/clientes/listarClientes.xhtml?faces-redirect=true";
+    return PathConstants.PATH_LISTAR_CLIENTES;
   }
 
   public String salvar() {
     try {
       clienteService.salvar(cliente);
-      return "/content/clientes/listarClientes.xhtml?faces-redirect=true";
+      return PathConstants.PATH_LISTAR_CLIENTES;
     } catch (Exception e) {
       ClienteExceptions ex = (ClienteExceptions) e;
       addMensagem(FacesMessage.SEVERITY_ERROR, "Erro ao salvar: " + ex.getMessage());
@@ -60,7 +61,7 @@ public class ClienteBean implements Serializable {
   public String atualizar() {
     try {
       clienteService.atualizar(cliente);
-      return "/content/clientes/listarClientes.xhtml?faces-redirect=true";
+      return PathConstants.PATH_LISTAR_CLIENTES;
     } catch (Exception e) {
       addMensagem(FacesMessage.SEVERITY_ERROR, "Erro ao atualizar: " + e.getMessage());
       return null;
@@ -89,7 +90,7 @@ public class ClienteBean implements Serializable {
   }
 
   public String prepararEdicao(Cliente cliente) {
-    return "/content/clientes/editarCliente.xhtml?faces-redirect=true&clienteId=" + cliente.getId();
+    return PathConstants.PATH_EDITAR_CLIENTE + cliente.getId();
   }
 
   private void carregarClientes() {
