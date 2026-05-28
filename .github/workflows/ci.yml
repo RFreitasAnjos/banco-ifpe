@@ -4,6 +4,8 @@ permissions:
   contents: read
 
 on:
+  workflow_dispatch:
+
   push:
     branches:
       - dev
@@ -43,9 +45,9 @@ env:
   MAVEN_OPTS: '-Xmx1024m'
   WAR_FILE: banco-ifpe.war
 
-  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
-  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
-  POSTGRES_PASSWORD: ${{ secrets.PASSWORD_POSTGRES }}
+  POSTGRES_DB: db_banco_ifpe
+  POSTGRES_USER: postgres
+  POSTGRES_PASSWORD: postgres
 
 jobs:
   validate:
