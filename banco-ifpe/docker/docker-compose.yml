@@ -5,12 +5,12 @@ services:
     container_name: postgres_banco_ifpe
     environment:
       POSTGRES_DB: db_banco_ifpe
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+      POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
     ports:
       - "5432:5432"
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${{ secrets.POSTGRES_USER }}"]
       interval: 10s
       timeout: 5s
       retries: 5

@@ -42,6 +42,9 @@ env:
   JAVA_DISTRIBUTION: 'temurin'
   MAVEN_OPTS: '-Xmx1024m'
   WAR_FILE: banco-ifpe.war
+  
+  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+  POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
 
 jobs:
   validate:
