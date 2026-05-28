@@ -30,6 +30,9 @@ public class ClienteBean implements Serializable {
 
   @PostConstruct
   public void init() {
+    if (cliente == null) {
+      cliente = new Cliente();
+    }
     carregarClientes();
   }
 
@@ -126,4 +129,5 @@ public class ClienteBean implements Serializable {
   }
 
 }
+
 

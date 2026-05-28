@@ -1,6 +1,8 @@
 package br.com.ifpe.banco.e2e;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.time.Duration;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
@@ -30,17 +32,56 @@ public class ClienteE2EIT {
 
     @BeforeClass
     public static void setUp() {
-        try {
-            WebDriverManager.chromedriver().setup();
-        } catch (Exception e) {
-            System.out.println("[E2E] WebDriverManager falhou, usando driver do sistema: " + e.getMessage());
+        ChromeOptions options = new ChromeOptions();
+        String chromeBinary = resolveChromeBinary();
+        if (chromeBinary != null) {
+            options.setBinary(chromeBinary);
         }
 
-        ChromeOptions options = new ChromeOptions();
-        options.addArguments("--headless", "--no-sandbox", "--disable-dev-shm-usage", "--disable-gpu");
+        try {
+            if (chromeBinary != null) {
+                WebDriverManager.chromedriver().browserBinary(chromeBinary).setup();
+            } else {
+                WebDriverManager.chromedriver().setup();
+            }
+        } catch (Exception e) {
+            System.out.println("[E2E] Falha ao resolver chromedriver automaticamente: " + e.getMessage());
+        }
+
+        options.addArguments(
+                "--headless=new",
+                "--no-sandbox",
+                "--disable-dev-shm-usage",
+                "--disable-gpu",
+                "--disable-extensions",
+                "--remote-debugging-port=9222",
+                "--window-size=1920,1080",
+                "--user-data-dir=/tmp/chrome-e2e-profile"
+        );
 
         driver = new ChromeDriver(options);
-        driver.manage().window().maximize();
+    }
+
+    private static String resolveChromeBinary() {
+        String envChrome = System.getenv("CHROME_BIN");
+        if (envChrome != null && !envChrome.trim().isEmpty()) {
+            return envChrome;
+        }
+
+        String[] candidates = {
+                "/usr/bin/google-chrome",
+                "/usr/bin/google-chrome-stable",
+                "/usr/bin/chromium-browser",
+                "/usr/bin/chromium"
+        };
+
+        for (String candidate : candidates) {
+            if (Files.exists(Paths.get(candidate))) {
+                return candidate;
+            }
+        }
+
+        return null;
     }
 
     @AfterClass
@@ -117,3 +158,5 @@ public class ClienteE2EIT {
                 driver.getCurrentUrl().contains("listarClientes.xhtml"));
     }
 }
+
+
