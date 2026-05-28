@@ -303,24 +303,23 @@ jobs:
           '
 
       - name: Subir WildFly
-        run: docker compose -f "$COMPOSE_FILE" up -d wildfly
-
-      - name: Esperar WildFly iniciar
         run: |
-          timeout 300 bash -c '
-            until docker logs wildfly_banco_ifpe 2>&1 | grep -q "WFLYSRV0025"; do
-              sleep 5
-            done
-          '
+          docker compose -f "$COMPOSE_FILE" up -d --no-deps wildfly
+          docker compose -f "$COMPOSE_FILE" ps
 
       - name: Esperar deploy da aplicacao
         run: |
-          timeout 300 bash -c '
+          timeout 420 bash -c '
             until curl -sf http://localhost:8080/banco-ifpe/ -o /dev/null; do
+              if ! docker ps --format "{{.Names}}" | grep -q "^wildfly_banco_ifpe$"; then
+                echo "Container wildfly_banco_ifpe nao esta em execucao."
+                docker compose -f "$COMPOSE_FILE" ps
+                docker logs wildfly_banco_ifpe 2>&1 | tail -n 200 || true
+                exit 1
+              fi
               sleep 5
             done
           '
-
       - name: Executar testes E2E
         env:
           APP_BASE_URL: http://localhost:8080/banco-ifpe
@@ -381,6 +380,7 @@ jobs:
           echo "| Test | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| Build | ${{ needs.build.result }} |" >> "$GITHUB_STEP_SUMMARY"
           echo "| E2E | ${{ needs.e2e.result }} |" >> "$GITHUB_STEP_SUMMARY"
+
 
 
 
