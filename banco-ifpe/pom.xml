@@ -11,7 +11,8 @@
     <packaging>war</packaging>
 
     <properties>
-        <maven.compiler.release>8</maven.compiler.release>
+        <maven.compiler.source>1.8</maven.compiler.source>
+        <maven.compiler.target>1.8</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>4.13.2</junit.version>
         <mockito.version>3.12.4</mockito.version>
@@ -73,8 +74,19 @@
     </dependencies>
 
     <build>
+        <testSourceDirectory>src/test</testSourceDirectory>
         <finalName>banco-ifpe</finalName>
         <plugins>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <version>3.11.0</version>
+                <configuration>
+                    <source>${maven.compiler.source}</source>
+                    <target>${maven.compiler.target}</target>
+                </configuration>
+            </plugin>
+
             <!-- Copia de recursos: fixado em 3.3.1 para evitar COPY_ATTRIBUTES -->
             <!-- no filesystem do CI (maven-resources-plugin 3.4.0 falha com     -->
             <!-- FileSystemException: Operation not permitted)                    -->
@@ -102,6 +114,7 @@
                 <configuration>
                     <includes>
                         <include>**/*Test.java</include>
+                        <include>**/*Tests.java</include>
                     </includes>
                     <excludes>
                         <exclude>**/*IT.java</exclude>
@@ -133,7 +146,7 @@
                 <artifactId>maven-checkstyle-plugin</artifactId>
                 <version>3.3.1</version>
                 <configuration>
-                    <configLocation>checkstyle.xml</configLocation>
+                    <configLocation>${project.basedir}/checkstyle.xml</configLocation>
                     <failsOnError>true</failsOnError>
                     <consoleOutput>true</consoleOutput>
                     <includeTestSourceDirectory>false</includeTestSourceDirectory>
@@ -147,7 +160,7 @@
                 <version>3.21.2</version>
                 <configuration>
                     <rulesets>
-                        <ruleset>pmd.xml</ruleset>
+                        <ruleset>${project.basedir}/pmd.xml</ruleset>
                     </rulesets>
                     <failOnViolation>true</failOnViolation>
                     <printFailingErrors>true</printFailingErrors>
@@ -201,3 +214,5 @@
     </profiles>
 
 </project>
+
+

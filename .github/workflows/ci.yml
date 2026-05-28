@@ -1,0 +1,394 @@
+name: CI - Banco IFPE
+
+permissions:
+  contents: read
+
+on:
+  push:
+    branches:
+      - dev
+      - 'feature/**'
+      - 'feat/**'
+      - 'fix/**'
+      - 'hotfix/**'
+      - 'release/**'
+    paths:
+      - 'banco-ifpe/**'
+      - 'src/**'
+      - 'docker/**'
+      - 'pom.xml'
+      - 'checkstyle.xml'
+      - 'pmd.xml'
+      - '.github/workflows/**'
+
+  pull_request:
+    branches:
+      - dev
+    paths:
+      - 'banco-ifpe/**'
+      - 'src/**'
+      - 'docker/**'
+      - 'pom.xml'
+      - 'checkstyle.xml'
+      - 'pmd.xml'
+      - '.github/workflows/**'
+
+concurrency:
+  group: banco-ifpe-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  JAVA_VERSION: '8'
+  JAVA_DISTRIBUTION: 'temurin'
+  MAVEN_OPTS: '-Xmx1024m'
+  WAR_FILE: banco-ifpe.war
+
+  POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+  POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+  POSTGRES_PASSWORD: ${{ secrets.PASSWORD_POSTGRES }}
+
+jobs:
+  validate:
+    name: 'Validacao Inicial'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Resolver caminhos do projeto
+        run: |
+          if [ -f "banco-ifpe/pom.xml" ]; then
+            echo "PROJECT_DIR=banco-ifpe" >> "$GITHUB_ENV"
+          elif [ -f "pom.xml" ]; then
+            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+          else
+            echo "ERRO: pom.xml nao encontrado na raiz nem em banco-ifpe/."
+            find . -maxdepth 3 -name pom.xml -print || true
+            exit 1
+          fi
+
+      - name: Validar estrutura do projeto
+        run: |
+          test -f "$PROJECT_DIR/pom.xml"
+          test -d "$PROJECT_DIR/src"
+          echo "Estrutura Maven OK em $PROJECT_DIR"
+
+      - name: Validar Docker Compose
+        run: |
+          COMPOSE_FILE="$PROJECT_DIR/docker/docker-compose.yml"
+          test -s "$COMPOSE_FILE"
+          ls -lah "$COMPOSE_FILE"
+          docker compose -f "$COMPOSE_FILE" config
+
+  lint:
+    name: 'Lint (Checkstyle - PMD - SpotBugs)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: validate
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Resolver caminhos do projeto
+        run: |
+          if [ -f "banco-ifpe/pom.xml" ]; then
+            echo "PROJECT_DIR=banco-ifpe" >> "$GITHUB_ENV"
+          else
+            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Exibir versoes
+        run: |
+          java -version
+          mvn -version
+
+      - name: Checkstyle
+        run: |
+          cd "$PROJECT_DIR"
+          mvn -B checkstyle:check
+
+      - name: PMD
+        run: |
+          cd "$PROJECT_DIR"
+          mvn -B pmd:check
+
+      - name: SpotBugs
+        run: |
+          cd "$PROJECT_DIR"
+          mvn -B spotbugs:check
+
+      - name: Upload SpotBugs Report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: spotbugs-report
+          path: |
+            banco-ifpe/target/spotbugsXml.xml
+            banco-ifpe/target/site/
+            target/spotbugsXml.xml
+            target/site/
+          retention-days: 5
+
+  test:
+    name: 'Testes Unitarios'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: lint
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Resolver caminhos do projeto
+        run: |
+          if [ -f "banco-ifpe/pom.xml" ]; then
+            echo "PROJECT_DIR=banco-ifpe" >> "$GITHUB_ENV"
+          else
+            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Executar testes unitarios
+        run: |
+          cd "$PROJECT_DIR"
+          mvn -B clean test jacoco:report
+
+      - name: Publicar relatorios Surefire
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: surefire-reports
+          path: |
+            banco-ifpe/target/surefire-reports/
+            target/surefire-reports/
+          retention-days: 7
+
+      - name: Publicar cobertura JaCoCo
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: jacoco-report
+          path: |
+            banco-ifpe/target/site/jacoco/
+            target/site/jacoco/
+          retention-days: 7
+
+  build:
+    name: 'Build WAR'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    needs: test
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Resolver caminhos do projeto
+        run: |
+          if [ -f "banco-ifpe/pom.xml" ]; then
+            echo "PROJECT_DIR=banco-ifpe" >> "$GITHUB_ENV"
+            echo "WAR_PATH=banco-ifpe/target/banco-ifpe.war" >> "$GITHUB_ENV"
+          else
+            echo "PROJECT_DIR=." >> "$GITHUB_ENV"
+            echo "WAR_PATH=target/banco-ifpe.war" >> "$GITHUB_ENV"
+          fi
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Gerar WAR
+        run: |
+          cd "$PROJECT_DIR"
+          mvn -B clean package -DskipTests
+
+      - name: Validar artefato
+        run: |
+          test -f "$WAR_PATH"
+          echo "## Artefato Gerado" >> "$GITHUB_STEP_SUMMARY"
+          SIZE=$(du -sh "$WAR_PATH" | cut -f1)
+          echo "| Arquivo | Tamanho |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|----------|----------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| $WAR_FILE | $SIZE |" >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload WAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: banco-ifpe-war
+          path: |
+            banco-ifpe/target/banco-ifpe.war
+            target/banco-ifpe.war
+          retention-days: 3
+
+  e2e:
+    name: 'E2E (WildFly + PostgreSQL + Selenium)'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    needs: build
+
+    steps:
+      - name: Checkout do codigo
+        uses: actions/checkout@v4
+
+      - name: Resolver caminhos do projeto
+        run: |
+          if [ -f "banco-ifpe/pom.xml" ]; then
+            PROJECT_DIR="banco-ifpe"
+          else
+            PROJECT_DIR="."
+          fi
+          echo "PROJECT_DIR=$PROJECT_DIR" >> "$GITHUB_ENV"
+          echo "COMPOSE_FILE=$PROJECT_DIR/docker/docker-compose.yml" >> "$GITHUB_ENV"
+
+      - name: Validar caminho do docker-compose
+        run: |
+          echo "PROJECT_DIR=$PROJECT_DIR"
+          echo "COMPOSE_FILE=$COMPOSE_FILE"
+          test -s "$COMPOSE_FILE"
+          ls -lah "$COMPOSE_FILE"
+
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: ${{ env.JAVA_DISTRIBUTION }}
+          java-version: ${{ env.JAVA_VERSION }}
+          cache: maven
+
+      - name: Verificar Docker
+        run: |
+          docker --version
+          docker compose version
+
+      - name: Download WAR
+        uses: actions/download-artifact@v4
+        with:
+          name: banco-ifpe-war
+          path: war-artifact
+
+      - name: Preparar e confirmar WAR
+        run: |
+          mkdir -p "$PROJECT_DIR/target"
+          WAR_SRC=$(find war-artifact -type f -name "banco-ifpe.war" | head -n 1)
+          test -n "$WAR_SRC"
+          cp "$WAR_SRC" "$PROJECT_DIR/target/banco-ifpe.war"
+          ls -lh "$PROJECT_DIR/target/"
+          test -f "$PROJECT_DIR/target/banco-ifpe.war"
+      - name: Build WildFly
+        run: docker compose -f "$COMPOSE_FILE" build wildfly
+
+      - name: Subir PostgreSQL
+        run: docker compose -f "$COMPOSE_FILE" up -d postgres
+
+      - name: Esperar PostgreSQL
+        run: |
+          timeout 90 bash -c '
+            until docker exec postgres_banco_ifpe pg_isready -U postgres; do
+              sleep 3
+            done
+          '
+
+      - name: Subir WildFly
+        run: |
+          docker compose -f "$COMPOSE_FILE" up -d --no-deps wildfly
+          docker compose -f "$COMPOSE_FILE" ps
+
+      - name: Esperar deploy da aplicacao
+        run: |
+          timeout 420 bash -c '
+            until curl -sf http://localhost:8080/banco-ifpe/ -o /dev/null; do
+              if ! docker ps --format "{{.Names}}" | grep -q "^wildfly_banco_ifpe$"; then
+                echo "Container wildfly_banco_ifpe nao esta em execucao."
+                docker compose -f "$COMPOSE_FILE" ps
+                docker logs wildfly_banco_ifpe 2>&1 | tail -n 200 || true
+                exit 1
+              fi
+              sleep 5
+            done
+          '
+      - name: Executar testes E2E
+        env:
+          APP_BASE_URL: http://localhost:8080/banco-ifpe
+        run: |
+          cd "$PROJECT_DIR"
+          mvn -B verify -Pe2e -Dsurefire.skip=true
+
+      - name: Upload relatorios E2E
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: e2e-reports
+          path: |
+            banco-ifpe/target/failsafe-reports/
+            banco-ifpe/target/screenshots/
+            target/failsafe-reports/
+            target/screenshots/
+          retention-days: 5
+
+      - name: Logs containers
+        if: failure()
+        run: |
+          mkdir -p /tmp/container-logs
+          docker logs postgres_banco_ifpe > /tmp/container-logs/postgres.log 2>&1 || true
+          docker logs wildfly_banco_ifpe > /tmp/container-logs/wildfly.log 2>&1 || true
+
+      - name: Upload logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-logs
+          path: /tmp/container-logs/
+          retention-days: 5
+
+      - name: Derrubar ambiente
+        if: always()
+        run: docker compose -f "$COMPOSE_FILE" down -v
+
+  pipeline-summary:
+    name: 'Resumo Pipeline'
+    runs-on: ubuntu-latest
+    if: always()
+    needs:
+      - validate
+      - lint
+      - test
+      - build
+      - e2e
+
+    steps:
+      - name: Resumo final
+        run: |
+          echo "# Pipeline Finalizada" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Job | Resultado |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|------------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Validate | ${{ needs.validate.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Lint | ${{ needs.lint.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Test | ${{ needs.test.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Build | ${{ needs.build.result }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| E2E | ${{ needs.e2e.result }} |" >> "$GITHUB_STEP_SUMMARY"
+
+
+
+
+
+
+
+
