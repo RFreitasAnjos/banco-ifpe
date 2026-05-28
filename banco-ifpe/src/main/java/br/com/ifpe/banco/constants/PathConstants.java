@@ -14,4 +14,8 @@ public class PathConstants {
   public static final String PRINTER_PATH = BASE_PATH + "/printer";
   /** Caminho para cancelar proposta */
   public static final String CANCEL_PROPOST_PATH = BASE_PATH + "/cancelPropost";
+
+  public static final String PATH_LISTAR_CLIENTES = "/content/clientes/listarClientes.xhtml?faces-redirect=true";
+
+  public static final String PATH_EDITAR_CLIENTE = "/content/clientes/editarCliente.xhtml?faces-redirect=true&clienteId=";
 }
