@@ -1,4 +1,4 @@
-package main.java.br.com.ifpe.banco.constants;
+package br.com.ifpe.banco.constants;
 
 public class PathConstants {
   
