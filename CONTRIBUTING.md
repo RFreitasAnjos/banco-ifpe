@@ -21,8 +21,8 @@ Este guia explica o processo para propor mudancas de forma organizada.
 Faca um fork do repositorio e clone localmente:
 
 ```bash
-git clone https://github.com/seu-usuario/CURD-JSF.git
-cd CURD-JSF/banco-ifpe
+git clone https://github.com/RFreitasAnjos/banco-ifpe.git
+cd banco-ifpe/banco-ifpe
 ```
 
 ### 2. Crie uma branch
