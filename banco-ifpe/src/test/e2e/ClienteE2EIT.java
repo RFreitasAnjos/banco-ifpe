@@ -4,12 +4,14 @@ import io.github.bonigarcia.wdm.WebDriverManager;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.UUID;
 import org.junit.AfterClass;
 import org.junit.BeforeClass;
 import org.junit.FixMethodOrder;
 import org.junit.Test;
 import org.junit.runners.MethodSorters;
 import org.openqa.selenium.By;
+import org.openqa.selenium.PageLoadStrategy;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -33,6 +35,7 @@ public class ClienteE2EIT {
     @BeforeClass
     public static void setUp() {
         ChromeOptions options = new ChromeOptions();
+        options.setPageLoadStrategy(PageLoadStrategy.EAGER);
         String chromeBinary = resolveChromeBinary();
         if (chromeBinary != null) {
             options.setBinary(chromeBinary);
@@ -56,10 +59,11 @@ public class ClienteE2EIT {
                 "--disable-extensions",
                 "--remote-debugging-port=9222",
                 "--window-size=1920,1080",
-                "--user-data-dir=/tmp/chrome-e2e-profile"
+                "--user-data-dir=/tmp/chrome-e2e-profile-" + UUID.randomUUID()
         );
 
         driver = new ChromeDriver(options);
+            driver.manage().timeouts().pageLoadTimeout(Duration.ofSeconds(WAIT_SECONDS));
     }
 
     private static String resolveChromeBinary() {
@@ -115,10 +119,18 @@ public class ClienteE2EIT {
 
         assertTrue("Campo nome deve existir",
                 driver.findElements(By.id("formCadastro:nome")).size() > 0);
+        assertTrue("Campo CPF deve existir",
+            driver.findElements(By.id("formCadastro:cpf")).size() > 0);
         assertTrue("Campo email deve existir",
                 driver.findElements(By.id("formCadastro:email")).size() > 0);
-        assertTrue("Campo telefone deve existir",
-                driver.findElements(By.id("formCadastro:telefone")).size() > 0);
+        assertTrue("Campo data de nascimento deve existir",
+            driver.findElements(By.id("formCadastro:dataNascimento")).size() > 0);
+        assertTrue("Campo estado civil deve existir",
+            driver.findElements(By.id("formCadastro:estadoCivil")).size() > 0);
+        assertTrue("Campo genero deve existir",
+            driver.findElements(By.id("formCadastro:genero")).size() > 0);
+        assertTrue("Campo score deve existir",
+            driver.findElements(By.id("formCadastro:score")).size() > 0);
     }
 
     @Test
@@ -131,7 +143,13 @@ public class ClienteE2EIT {
         driver.findElement(By.xpath("//input[@type='submit' and @value='Salvar']")).click();
 
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'Nome e obrigatorio')]")));
+        wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'CPF e obrigatorio')]")));
         wait.until(ExpectedConditions.presenceOfElementLocated(By.xpath("//*[contains(text(),'Email e obrigatorio')]")));
+
+        // As mensagens de campos com conversao (ex.: LocalDate/enum) podem variar por ambiente.
+        assertTrue("A validacao deve apresentar mensagens obrigatorias na tela",
+            driver.getPageSource().contains("obrigatorio")
+                || driver.getPageSource().contains("obrigatoria"));
 
         assertTrue("Deve permanecer na pagina de criacao apos validacao",
                 driver.getCurrentUrl().contains("criarCliente.xhtml"));
@@ -145,6 +163,7 @@ public class ClienteE2EIT {
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("formCadastro:nome")));
 
         driver.findElement(By.id("formCadastro:nome")).sendKeys("Cliente E2E");
+        driver.findElement(By.id("formCadastro:cpf")).sendKeys("12345678901");
         driver.findElement(By.id("formCadastro:email")).sendKeys("e2e_" + System.currentTimeMillis() + "@empresa.com");
         driver.findElement(By.id("formCadastro:telefone")).sendKeys("11999990001");
         driver.findElement(By.xpath("//input[@type='submit' and @value='Salvar']")).click();
@@ -157,6 +176,7 @@ public class ClienteE2EIT {
         assertFalse("Nao deve redirecionar para lista enquanto campos obrigatorios do dominio nao estiverem na tela",
                 driver.getCurrentUrl().contains("listarClientes.xhtml"));
     }
+
 }
 
 

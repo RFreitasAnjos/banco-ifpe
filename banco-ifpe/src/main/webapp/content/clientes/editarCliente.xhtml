@@ -17,23 +17,106 @@
         <h:form id="formEdicao">
             <h:inputHidden value="#{clienteBean.cliente.id}"/>
 
-            <h:panelGrid columns="3" style="margin-bottom:20px;">
+            <h:messages globalOnly="true" style="color:red;display:block;margin-bottom:12px;"/>
+
+            <h:panelGrid columns="3" style="margin-bottom:20px;" columnClasses="rotulo,campo,mensagem">
                 <h:outputLabel value="Nome: *" for="nome"/>
                 <h:inputText id="nome" value="#{clienteBean.cliente.nomeCompleto}"
                              required="true" requiredMessage="Nome e obrigatorio"
+                             maxlength="150"
                              style="width:250px;padding:6px;"/>
                 <h:message for="nome" style="color:red;"/>
+
+                <h:outputLabel value="CPF: *" for="cpf"/>
+                <h:inputText id="cpf" value="#{clienteBean.cliente.cpf}"
+                             required="true" requiredMessage="CPF e obrigatorio"
+                             maxlength="14"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="cpf" style="color:red;"/>
 
                 <h:outputLabel value="Email: *" for="email"/>
                 <h:inputText id="email" value="#{clienteBean.cliente.email}"
                              required="true" requiredMessage="Email e obrigatorio"
+                             maxlength="120"
                              style="width:250px;padding:6px;"/>
                 <h:message for="email" style="color:red;"/>
 
                 <h:outputLabel value="Telefone:" for="telefone"/>
                 <h:inputText id="telefone" value="#{clienteBean.cliente.telefone}"
+                             maxlength="20"
                              style="width:250px;padding:6px;"/>
-                <h:outputText value=""/>
+                <h:message for="telefone" style="color:red;"/>
+
+                <h:outputLabel value="Endereco:" for="endereco"/>
+                <h:inputText id="endereco" value="#{clienteBean.cliente.endereco}"
+                             maxlength="200"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="endereco" style="color:red;"/>
+
+                <h:outputLabel value="Cidade:" for="cidade"/>
+                <h:inputText id="cidade" value="#{clienteBean.cliente.cidade}"
+                             maxlength="100"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="cidade" style="color:red;"/>
+
+                <h:outputLabel value="Estado:" for="estado"/>
+                <h:inputText id="estado" value="#{clienteBean.cliente.estado}"
+                             maxlength="2"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="estado" style="color:red;"/>
+
+                <h:outputLabel value="CEP:" for="cep"/>
+                <h:inputText id="cep" value="#{clienteBean.cliente.cep}"
+                             maxlength="9"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="cep" style="color:red;"/>
+
+                <h:outputLabel value="Pais:" for="pais"/>
+                <h:inputText id="pais" value="#{clienteBean.cliente.pais}"
+                             maxlength="60"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="pais" style="color:red;"/>
+
+                <h:outputLabel value="Data de nascimento: *" for="dataNascimento"/>
+                <h:inputText id="dataNascimento" value="#{clienteBean.cliente.dataNascimento}"
+                             required="true" requiredMessage="Data de nascimento e obrigatoria"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="dataNascimento" style="color:red;"/>
+
+                <h:outputLabel value="Estado civil: *" for="estadoCivil"/>
+                <h:selectOneMenu id="estadoCivil" value="#{clienteBean.cliente.estadoCivil}"
+                                 required="true" requiredMessage="Estado civil e obrigatorio"
+                                 style="width:265px;padding:6px;">
+                    <f:selectItem itemLabel="Selecione" itemValue="" noSelectionOption="true"/>
+                    <f:selectItem itemLabel="Solteiro" itemValue="SOLTEIRO"/>
+                    <f:selectItem itemLabel="Casado" itemValue="CASADO"/>
+                    <f:selectItem itemLabel="Divorciado" itemValue="DIVORCIADO"/>
+                    <f:selectItem itemLabel="Viuvo" itemValue="VIUVO"/>
+                </h:selectOneMenu>
+                <h:message for="estadoCivil" style="color:red;"/>
+
+                <h:outputLabel value="Genero: *" for="genero"/>
+                <h:selectOneMenu id="genero" value="#{clienteBean.cliente.genero}"
+                                 required="true" requiredMessage="Genero e obrigatorio"
+                                 style="width:265px;padding:6px;">
+                    <f:selectItem itemLabel="Selecione" itemValue="" noSelectionOption="true"/>
+                    <f:selectItem itemLabel="Masculino" itemValue="MASCULINO"/>
+                    <f:selectItem itemLabel="Feminino" itemValue="FEMININO"/>
+                    <f:selectItem itemLabel="Outro" itemValue="OUTRO"/>
+                </h:selectOneMenu>
+                <h:message for="genero" style="color:red;"/>
+
+                <h:outputLabel value="Profissao:" for="profissao"/>
+                <h:inputText id="profissao" value="#{clienteBean.cliente.profissao}"
+                             maxlength="80"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="profissao" style="color:red;"/>
+
+                <h:outputLabel value="Score (0 a 10): *" for="score"/>
+                <h:inputText id="score" value="#{clienteBean.cliente.score}"
+                             required="true" requiredMessage="Score e obrigatorio"
+                             style="width:250px;padding:6px;"/>
+                <h:message for="score" style="color:red;"/>
             </h:panelGrid>
 
             <h:commandButton value="Atualizar" action="#{clienteBean.atualizar}"
