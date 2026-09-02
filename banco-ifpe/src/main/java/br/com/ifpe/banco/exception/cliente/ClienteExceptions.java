@@ -13,7 +13,7 @@ public class ClienteExceptions extends RuntimeException {
   }
 
   public static ClienteExceptions clienteNaoEncontrado(Long id) {
-    return new ClienteExceptions("Cliente nao encontrado para o id: " + id);
+    return new ClienteExceptions("Cliente no encontrado para o id: " + id);
   }
 
   public static ClienteExceptions idObrigatorio() {
